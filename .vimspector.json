@@ -1,0 +1,14 @@
+{
+  "configurations": {
+    "test": {
+      "adapter": "vscode-go",
+      "configuration": {
+        "request": "launch",
+        "program": "${fileDirname}",
+        "args": [],
+        "mode": "test",
+        "dlvToolPath": "$GOPATH/bin/dlv"
+      }
+    }
+  }
+}
