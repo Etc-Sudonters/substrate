@@ -13,6 +13,12 @@ type Origination Node
 // an entity in the graph that is the destination for an edge
 type Destination Node
 
+// a connection between two entities in the graph
+type Edge struct {
+	O Origination
+	D Destination
+}
+
 // describes a graph as the set of originating edges
 type OriginationMap map[Origination][]Destination
 

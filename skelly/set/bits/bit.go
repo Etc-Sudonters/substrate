@@ -131,6 +131,18 @@ func (b Bitset64) Eq(n Bitset64) bool {
 	return true
 }
 
+func (b Bitset64) Len() int {
+	var count int
+
+	for _, bucket := range b.bytes {
+		for ; bucket != 0; bucket &= bucket - 1 {
+			count++
+		}
+	}
+
+	return count
+}
+
 const bs64Size = 64
 
 func bs64idx(i int) int {

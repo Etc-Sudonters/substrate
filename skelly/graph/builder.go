@@ -30,7 +30,7 @@ func (b *Builder) AddNodes(ns []Node) {
 }
 
 // connects o -> d, if either node doesn't exist they are created
-// edges maintain insertion order, duplicate edges are not added
+//  duplicate edges are not added, order isn't guaranteed
 func (b *Builder) AddEdge(o Origination, d Destination) error {
 	b.AddNode(Node(o))
 	b.AddNode(Node(d))

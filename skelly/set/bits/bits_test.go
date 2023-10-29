@@ -135,3 +135,24 @@ func TestDifference(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestLength(t *testing.T) {
+	b := New(3)
+	b.Set(1)
+	b.Set(65)
+	b.Set(129)
+
+	if l := b.Len(); l != 3 {
+		t.Fatalf("expected length of 3 but got %d", l)
+	}
+
+	b = New(Buckets(10000))
+
+	for i := 0; i < 10000; i += 2 {
+		b.Set(i)
+	}
+
+	if l := b.Len(); l != 5000 {
+		t.Fatalf("expected length of 5000 but get %d", l)
+	}
+}
