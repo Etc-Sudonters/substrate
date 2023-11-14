@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/etc-sudonters/substrate/skelly/bitset"
 	"github.com/etc-sudonters/substrate/skelly/queue"
-	"github.com/etc-sudonters/substrate/skelly/set/bits"
 	"github.com/etc-sudonters/substrate/skelly/stack"
 )
 
@@ -59,7 +59,7 @@ func (v VisitorFunc) Visit(ctx context.Context, n Node) error {
 
 func (b BreadthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 	q := &queue.Q[Node]{r}
-	seen := bits.New(bits.Buckets(g.NodeCount()))
+	seen := bitset.New(bitset.Buckets(g.NodeCount()))
 	seen.Set(int(r))
 
 	var node Node
@@ -87,8 +87,8 @@ func (b BreadthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 
 		for _, neighbor := range neighbors {
 			neighbor := Node(neighbor)
-			if !bits.Test(seen, neighbor) {
-				bits.Set(seen, neighbor)
+			if !bitset.Test(seen, neighbor) {
+				bitset.Set(seen, neighbor)
 				q.Push(neighbor)
 			}
 		}
@@ -100,7 +100,7 @@ func (b BreadthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 
 func (d DepthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 	s := &stack.S[Node]{r}
-	seen := bits.New(bits.Buckets(g.NodeCount()))
+	seen := bitset.New(bitset.Buckets(g.NodeCount()))
 
 	var node Node
 	for len(*s) > 0 {
@@ -110,12 +110,12 @@ func (d DepthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 
 		node, _ = s.Pop()
 
-		if !bits.Test(seen, node) {
+		if !bitset.Test(seen, node) {
 			if err := d.Visitor.Visit(ctx, Node(node)); err != nil {
 				return err
 			}
 
-			bits.Set(seen, node)
+			bitset.Set(seen, node)
 			neighbors, err := d.Selector.Select(g, Node(node))
 			if err != nil {
 				return err

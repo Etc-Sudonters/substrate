@@ -1,4 +1,4 @@
-package set
+package hashset
 
 type Id interface {
 	comparable
