@@ -1,6 +1,10 @@
 package bitset
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/etc-sudonters/substrate/reiterate"
+)
 
 const (
 	minU uint64 = 0
@@ -153,6 +157,59 @@ func TestLength(t *testing.T) {
 	}
 
 	if l := b.Len(); l != 5000 {
-		t.Fatalf("expected length of 5000 but get %d", l)
+		t.Fatalf("expected length of 5000 but got %d", l)
+	}
+}
+
+func TestElems(t *testing.T) {
+	b := New(3)
+	b.Set(1)
+	b.Set(65)
+	b.Set(129)
+
+	expected := []int{1, 65, 129}
+	elems := b.Elems()
+
+	if len(expected) != len(elems) {
+		t.Fatalf("mismatched elems\nexpected:\t%+v\nactual:\t%+v", expected, elems)
+	}
+
+	pairs := reiterate.ZipTwo(expected, elems)
+
+	for i := 0; pairs.Next(); i++ {
+		p := pairs.Current()
+		if p.A != p.B {
+			t.Logf("expected to find %d at index %d but found %d", p.A, i, p.B)
+			t.Fail()
+		}
+	}
+
+	b = New(Buckets(10000))
+	expected = make([]int, 0, 5000)
+
+	for i := 0; i < 10000; i += 2 {
+		b.Set(i)
+		expected = append(expected, i)
+	}
+
+	elems = b.Elems()
+	l := b.Len()
+
+	if len(elems) != l {
+		t.Fatalf("len(Elems()) and Len() disagree\nlen(Elems()) = %d\nLen() = %d", len(elems), l)
+	}
+
+	if l != len(expected) {
+		t.Fatalf("expected length of %d but got %d", len(expected), l)
+	}
+
+	pairs = reiterate.ZipTwo(expected, elems)
+
+	for i := 0; pairs.Next(); i++ {
+		p := pairs.Current()
+		if p.A != p.B {
+			t.Logf("expected to find %d at index %d but found %d", p.A, i, p.B)
+			t.Fail()
+		}
 	}
 }

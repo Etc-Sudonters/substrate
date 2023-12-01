@@ -2,6 +2,7 @@ package bitset
 
 import (
 	"fmt"
+	"math/bits"
 
 	"github.com/etc-sudonters/substrate/reiterate"
 )
@@ -141,6 +142,20 @@ func (b Bitset64) Len() int {
 	}
 
 	return count
+}
+
+func (b Bitset64) Elems() []int {
+	var elems []int
+
+	for k, bucket := range b.bytes {
+		for bucket != 0 {
+			tz := bits.TrailingZeros64(bucket)
+			elems = append(elems, k*64+tz)
+			bucket ^= (1 << tz)
+		}
+	}
+
+	return elems
 }
 
 const bs64Size = 64
