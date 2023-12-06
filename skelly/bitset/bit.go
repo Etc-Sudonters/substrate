@@ -53,6 +53,12 @@ func FromRaw(parts ...uint64) Bitset64 {
 	return b
 }
 
+func ToRawParts(b Bitset64) []uint64 {
+	ret := make([]uint64, len(b.bytes))
+	copy(ret, b.bytes)
+	return ret
+}
+
 func Copy(b Bitset64) Bitset64 {
 	n := New(b.k)
 	copy(n.bytes, b.bytes)
