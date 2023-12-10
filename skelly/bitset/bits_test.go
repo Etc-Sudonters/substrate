@@ -14,19 +14,19 @@ const (
 func TestSetsBits(t *testing.T) {
 	expected := []uint64{2, 2, 2}
 
-	numbers := []int{
+	numbers := []uint64{
 		1,
 		65,
 		129,
 	}
 
-	b := New(3)
+	b := Bitset64{}
 	for i := range numbers {
 		b.Set(numbers[i])
 	}
 
 	for i := range expected {
-		if expected[i] != b.bytes[i] {
+		if expected[i] != b.buckets[i] {
 			t.FailNow()
 		}
 	}
@@ -35,15 +35,15 @@ func TestSetsBits(t *testing.T) {
 func TestClearsBits(t *testing.T) {
 	expected := []uint64{2, 0, 2}
 
-	b := New(3)
-	numbers := []int{1, 65, 129}
+	b := Bitset64{}
+	numbers := []uint64{1, 65, 129}
 	for i := range numbers {
 		b.Set(numbers[i])
 	}
-	b.Clear(65)
+	b.Unset(65)
 
 	for i := range expected {
-		if expected[i] != b.bytes[i] {
+		if expected[i] != b.buckets[i] {
 			t.FailNow()
 		}
 	}
@@ -51,32 +51,31 @@ func TestClearsBits(t *testing.T) {
 
 func TestTestBits(t *testing.T) {
 	var b Bitset64
-	b.k = 3
-	b.bytes = []uint64{2, 2, 2}
+	b.buckets = []uint64{2, 2, 2}
 
-	if !b.Test(1) {
+	if !b.IsSet(1) {
 		t.Log("expected 1 to be set")
 		t.Fail()
 	}
 
-	if !b.Test(65) {
+	if !b.IsSet(65) {
 		t.Log("expected 65 to be set")
 		t.Fail()
 	}
 
-	if !b.Test(129) {
+	if !b.IsSet(129) {
 		t.Log("expected 129 to be set")
 		t.Fail()
 	}
 }
 
 func TestComplement(t *testing.T) {
-	b := New(3)
+	b := Bitset64{}
 	b.Set(1)
 	b.Set(65)
 	b.Set(129)
 
-	comp := b.Complement().bytes
+	comp := b.Complement().buckets
 	expected := maxU ^ 2
 
 	if comp[0] != expected || comp[1] != expected || comp[2] != expected {
@@ -85,10 +84,10 @@ func TestComplement(t *testing.T) {
 }
 
 func TestIntersect(t *testing.T) {
-	b1 := New(3)
-	b2 := New(3)
+	b1 := Bitset64{}
+	b2 := Bitset64{}
 
-	shared := []int{1, 65, 129}
+	shared := []uint64{1, 65, 129}
 	b1.Set(144)
 	b2.Set(13)
 
@@ -97,7 +96,7 @@ func TestIntersect(t *testing.T) {
 		b2.Set(shared[i])
 	}
 
-	I := b1.Intersect(b2).bytes
+	I := b1.Intersect(b2).buckets
 
 	if I[0] != 2 || I[1] != 2 || I[2] != 2 {
 		t.Fail()
@@ -105,9 +104,9 @@ func TestIntersect(t *testing.T) {
 }
 
 func TestUnion(t *testing.T) {
-	b1 := New(1)
-	b2 := New(2)
-	b3 := New(3)
+	b1 := Bitset64{}
+	b2 := Bitset64{}
+	b3 := Bitset64{}
 
 	b1.Set(1)
 	b2.Set(65)
@@ -121,27 +120,33 @@ func TestUnion(t *testing.T) {
 }
 
 func TestDifference(t *testing.T) {
-	b1 := New(3)
-	b2 := New(3)
+	b1 := Bitset64{}
+	b2 := Bitset64{}
 
 	b1.Set(1)
 	b1.Set(65)
 	b2.Set(65)
 	b2.Set(129)
 
-	if !b1.Difference(b2).Eq(FromRaw(2, 0, 0)) {
+	b1DiffB2 := b1.Difference(b2)
+	expected := FromRaw(2, 0, 0)
+
+	if !b1DiffB2.Eq(expected) {
 		t.Log("expected only 1 to be set")
 		t.Fail()
 	}
 
-	if !b2.Difference(b1).Eq(FromRaw(0, 0, 2)) {
+	b2DiffB1 := b2.Difference(b1)
+	expected = FromRaw(0, 0, 2)
+
+	if !b2DiffB1.Eq(expected) {
 		t.Log("expected only 129 to be set")
 		t.Fail()
 	}
 }
 
 func TestLength(t *testing.T) {
-	b := New(3)
+	b := Bitset64{}
 	b.Set(1)
 	b.Set(65)
 	b.Set(129)
@@ -150,10 +155,10 @@ func TestLength(t *testing.T) {
 		t.Fatalf("expected length of 3 but got %d", l)
 	}
 
-	b = New(Buckets(10000))
+	b = WithBucketsFor(10000)
 
 	for i := 0; i < 10000; i += 2 {
-		b.Set(i)
+		b.Set(uint64(i))
 	}
 
 	if l := b.Len(); l != 5000 {
@@ -162,12 +167,12 @@ func TestLength(t *testing.T) {
 }
 
 func TestElems(t *testing.T) {
-	b := New(3)
+	b := Bitset64{}
 	b.Set(1)
 	b.Set(65)
 	b.Set(129)
 
-	expected := []int{1, 65, 129}
+	expected := []uint64{1, 65, 129}
 	elems := b.Elems()
 
 	if len(expected) != len(elems) {
@@ -184,12 +189,12 @@ func TestElems(t *testing.T) {
 		}
 	}
 
-	b = New(Buckets(10000))
-	expected = make([]int, 0, 5000)
+	b = WithBucketsFor(10000)
+	expected = make([]uint64, 0, 5000)
 
 	for i := 0; i < 10000; i += 2 {
-		b.Set(i)
-		expected = append(expected, i)
+		b.Set(uint64(i))
+		expected = append(expected, uint64(i))
 	}
 
 	elems = b.Elems()
@@ -211,5 +216,22 @@ func TestElems(t *testing.T) {
 			t.Logf("expected to find %d at index %d but found %d", p.A, i, p.B)
 			t.Fail()
 		}
+	}
+}
+
+func TestEq(t *testing.T) {
+	b1 := Bitset64{}
+	b1.Set(32)
+	b2 := Copy(b1)
+	b2.resize(3)
+
+	if !b1.Eq(b2) {
+		t.Log("expected b1 == b2")
+		t.Fail()
+	}
+
+	if !b2.Eq(b1) {
+		t.Log("expected b2 == b1")
+		t.Fail()
 	}
 }
