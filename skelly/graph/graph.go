@@ -2,10 +2,12 @@ package graph
 
 import (
 	"fmt"
+
+	"github.com/etc-sudonters/substrate/skelly/bitset"
 )
 
 // an entity in the graph
-type Node int
+type Node uint64
 
 // an entity in the graph that is the origination for an edge
 type Origination Node
@@ -20,10 +22,10 @@ type Edge struct {
 }
 
 // describes a graph as the set of originating edges
-type OriginationMap map[Origination][]Destination
+type OriginationMap map[Origination]bitset.Bitset64
 
 // describes a graph as the set of terminating edges
-type destinationMap map[Destination][]Origination
+type destinationMap map[Destination]bitset.Bitset64
 
 // allows specifying direction when interacting with a Directed graph
 type Direction interface {
@@ -60,12 +62,12 @@ func FromOriginationMap(src OriginationMap) Directed {
 	return b.G
 }
 
-// adjanceny list, edges maintain insertion order, nodes do not
+// adjanceny list, insertion order is not preserved
 // do not construct directly, use a provided ctor
 // direct usage of Directed is readonly
 type Directed struct {
-	origins map[Origination][]Destination
-	dests   map[Destination][]Origination
+	origins map[Origination]bitset.Bitset64
+	dests   map[Destination]bitset.Bitset64
 }
 
 func (g Directed) NodeCount() int {
@@ -73,28 +75,19 @@ func (g Directed) NodeCount() int {
 }
 
 // given Node n, find all other nodes that point at it
-func (g Directed) Predecessors(n Node) ([]Origination, error) {
-	l := copyEdgeList(g.dests[Destination(n)])
-	if l == nil {
-		return l, ErrDestNotFound
+func (g Directed) Predecessors(n Node) (bitset.Bitset64, error) {
+	destinations, found := g.dests[Destination(n)]
+	if !found {
+		return bitset.Bitset64{}, ErrDestNotFound
 	}
-	return l, nil
+	return bitset.Copy(destinations), nil
 }
 
 // given Node n, find all nodes that it points at
-func (g Directed) Successors(n Node) ([]Destination, error) {
-	l := copyEdgeList(g.origins[Origination(n)])
-	if l == nil {
-		return l, ErrOriginNotFound
+func (g Directed) Successors(n Node) (bitset.Bitset64, error) {
+	origins, found := g.origins[Origination(n)]
+	if !found {
+		return bitset.Bitset64{}, ErrOriginNotFound
 	}
-	return l, nil
-}
-
-func copyEdgeList[T Direction](src []T) []T {
-	if src == nil {
-		return nil
-	}
-	dst := make([]T, len(src))
-	copy(dst, src)
-	return dst
+	return bitset.Copy(origins), nil
 }

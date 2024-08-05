@@ -4,11 +4,11 @@ import (
 	"math/bits"
 )
 
-func bucketFor(i uint64) int {
+func Buckets(i uint64) int {
 	return int(i / 64)
 }
 
-func indexFor(i uint64) uint64 {
+func BitIndex(i uint64) uint64 {
 	return 1 << (i % 64)
 }
 
@@ -18,8 +18,16 @@ func New(i int) Bitset64 {
 	return b
 }
 
+func Create(members ...uint64) Bitset64 {
+	b := New(0)
+	for _, m := range members {
+		b.Set(m)
+	}
+	return b
+}
+
 func WithBucketsFor(i uint64) Bitset64 {
-	return New(bucketFor(i))
+	return New(Buckets(i))
 }
 
 func FromRaw(parts ...uint64) Bitset64 {
@@ -65,29 +73,29 @@ func (b *Bitset64) resize(bucket int) {
 }
 
 func (b *Bitset64) Set(i uint64) {
-	bucket := bucketFor(i)
-	bit := indexFor(i)
+	bucket := Buckets(i)
+	bit := BitIndex(i)
 	b.resize(bucket)
 	b.buckets[bucket] |= bit
 }
 
 func (b Bitset64) Unset(i uint64) {
-	bucket := bucketFor(i)
+	bucket := Buckets(i)
 
 	if bucket >= len(b.buckets) {
 		return
 	}
 
-	b.buckets[bucket] &= ^indexFor(i)
+	b.buckets[bucket] &= ^BitIndex(i)
 }
 
 func (b Bitset64) IsSet(i uint64) bool {
-	bucket := bucketFor(i)
+	bucket := Buckets(i)
 	if bucket >= len(b.buckets) {
 		return false
 	}
 
-	bit := indexFor(i)
+	bit := BitIndex(i)
 	return bit == (bit & b.buckets[bucket])
 }
 

@@ -3,7 +3,7 @@ package graph
 import (
 	"errors"
 
-	"github.com/etc-sudonters/substrate/reiterate"
+	"github.com/etc-sudonters/substrate/skelly/bitset"
 )
 
 var ErrNodeNotFound = errors.New("node not found")
@@ -18,8 +18,8 @@ type Builder struct {
 // adds a node to the graph if it doesn't exist already
 func (b *Builder) AddNode(n Node) {
 	if _, exists := b.G.dests[Destination(n)]; !exists {
-		b.G.dests[Destination(n)] = []Origination{}
-		b.G.origins[Origination(n)] = []Destination{}
+		b.G.dests[Destination(n)] = bitset.Bitset64{}
+		b.G.origins[Origination(n)] = bitset.Bitset64{}
 	}
 }
 
@@ -30,24 +30,27 @@ func (b *Builder) AddNodes(ns []Node) {
 }
 
 // connects o -> d, if either node doesn't exist they are created
-//  duplicate edges are not added, order isn't guaranteed
+//
+//	duplicate edges are not added, order isn't guaranteed
 func (b *Builder) AddEdge(o Origination, d Destination) error {
 	b.AddNode(Node(o))
 	b.AddNode(Node(d))
-	if !reiterate.Contains(d, b.G.origins[o]) {
-		b.G.origins[o] = append(b.G.origins[o], d)
-	}
 
-	if reiterate.Contains(o, b.G.dests[d]) {
-		b.G.dests[d] = append(b.G.dests[d], o)
-	}
+	origins := b.G.origins[o]
+	bitset.Set(&origins, d)
+	b.G.origins[o] = origins
+
+	dests := b.G.dests[d]
+	bitset.Set(&dests, o)
+	b.G.dests[d] = dests
 	return nil
 }
 
 func (b *Builder) AddEdges(e OriginationMap) error {
 	for o, neighbors := range e {
-		for _, d := range neighbors {
-			if err := b.AddEdge(o, d); err != nil {
+		biter := bitset.Iter(neighbors)
+		for biter.MoveNext() {
+			if err := b.AddEdge(o, Destination(biter.Current())); err != nil {
 				return err
 			}
 		}

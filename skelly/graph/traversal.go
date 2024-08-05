@@ -42,14 +42,14 @@ type (
 
 	// responsible for determining which nodes to explore next and in which direction to explore
 	Selector[T Direction] interface {
-		Select(Directed, Node) ([]T, error)
+		Select(Directed, Node) (bitset.Bitset64, error)
 	}
 
-	SelectorFunc[T Direction] func(Directed, Node) ([]T, error)
+	SelectorFunc[T Direction] func(Directed, Node) (bitset.Bitset64, error)
 	VisitorFunc               func(context.Context, Node) error
 )
 
-func (s SelectorFunc[T]) Select(g Directed, n Node) ([]T, error) {
+func (s SelectorFunc[T]) Select(g Directed, n Node) (bitset.Bitset64, error) {
 	return s(g, n)
 }
 
@@ -59,8 +59,8 @@ func (v VisitorFunc) Visit(ctx context.Context, n Node) error {
 
 func (b BreadthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 	q := &queue.Q[Node]{r}
-	seen := bitset.New(bitset.Buckets(g.NodeCount()))
-	seen.Set(int(r))
+	seen := bitset.New(bitset.Buckets(uint64(g.NodeCount())))
+	bitset.Set(&seen, r)
 
 	var node Node
 	for len(*q) > 0 {
@@ -85,14 +85,15 @@ func (b BreadthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 			return err
 		}
 
-		for _, neighbor := range neighbors {
-			neighbor := Node(neighbor)
-			if !bitset.Test(seen, neighbor) {
-				bitset.Set(seen, neighbor)
-				q.Push(neighbor)
+		iter := bitset.Iter(neighbors)
+		for iter.MoveNext() {
+			neighbor := uint64(iter.Current())
+			if !seen.IsSet(neighbor) {
+				seen.Set(neighbor)
+				q.Push(Node(neighbor))
 			}
-		}
 
+		}
 	}
 
 	return nil
@@ -100,7 +101,7 @@ func (b BreadthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 
 func (d DepthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 	s := &stack.S[Node]{r}
-	seen := bitset.New(bitset.Buckets(g.NodeCount()))
+	seen := bitset.New(bitset.Buckets(uint64(g.NodeCount())))
 
 	var node Node
 	for len(*s) > 0 {
@@ -110,19 +111,20 @@ func (d DepthFirst[T]) Walk(ctx context.Context, g Directed, r Node) error {
 
 		node, _ = s.Pop()
 
-		if !bitset.Test(seen, node) {
+		if !seen.IsSet(uint64(node)) {
 			if err := d.Visitor.Visit(ctx, Node(node)); err != nil {
 				return err
 			}
 
-			bitset.Set(seen, node)
+			seen.Set(uint64(node))
 			neighbors, err := d.Selector.Select(g, Node(node))
 			if err != nil {
 				return err
 			}
 
-			for _, neighbor := range neighbors {
-				s.Push(Node(neighbor))
+			iter := bitset.Iter(neighbors)
+			for iter.MoveNext() {
+				s.Push(Node(iter.Current()))
 			}
 		}
 	}

@@ -3,6 +3,8 @@ package graph
 import (
 	"context"
 	"errors"
+
+	"github.com/etc-sudonters/substrate/skelly/bitset"
 )
 
 type (
@@ -46,7 +48,7 @@ func (d DebugVisitor) Visit(ctx context.Context, node Node) error {
 	return err
 }
 
-func (d DebugSelector[T]) Select(g Directed, n Node) ([]T, error) {
+func (d DebugSelector[T]) Select(g Directed, n Node) (bitset.Bitset64, error) {
 	d.F("selecting from %s", n)
 	selected, err := d.S.Select(g, n)
 	if err != nil {

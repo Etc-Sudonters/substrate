@@ -6,6 +6,7 @@ import (
 
 	"github.com/etc-sudonters/substrate/circumstances"
 	"github.com/etc-sudonters/substrate/reiterate"
+	"github.com/etc-sudonters/substrate/skelly/bitset"
 	"github.com/etc-sudonters/substrate/skelly/queue"
 	"github.com/etc-sudonters/substrate/skelly/stack"
 )
@@ -25,9 +26,9 @@ func TestBFS(t *testing.T) {
 
 	expectedTrip := queue.From([]Node{A, B, D, C})
 	g := FromOriginationMap(OriginationMap{
-		Origination(A): {Destination(B), Destination(D)},
-		Origination(B): {Destination(D), Destination(C)},
-		Origination(C): {Destination(A), Destination(D)},
+		Origination(A): bitset.CreateT(Destination(B), Destination(D)),
+		Origination(B): bitset.CreateT(Destination(D), Destination(C)),
+		Origination(C): bitset.CreateT(Destination(A), Destination(D)),
 	})
 
 	q := queue.Make[Node](0, expectedTrip.Len())
@@ -67,10 +68,10 @@ func TestDFS(t *testing.T) {
 
 	expectedTrip := stack.From([]Node{A, B, E, D, C, F})
 	g := FromOriginationMap(OriginationMap{
-		Origination(A): {Destination(D), Destination(B)},
-		Origination(B): {Destination(E)},
-		Origination(C): {Destination(F)},
-		Origination(D): {Destination(C)},
+		Origination(A): bitset.CreateT(Destination(D), Destination(B)),
+		Origination(B): bitset.CreateT(Destination(E)),
+		Origination(C): bitset.CreateT(Destination(F)),
+		Origination(D): bitset.CreateT(Destination(C)),
 	})
 
 	visited := stack.Make[Node](0, expectedTrip.Len())
