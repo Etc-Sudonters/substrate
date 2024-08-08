@@ -6,7 +6,7 @@ import (
 	"github.com/etc-sudonters/substrate/reiterate"
 )
 
-func Iter(b Bitset64) reiterate.Iterator[int] {
+func Iter(b Bitset64) reiterate.Iterator[uint64] {
 	return &iter{ToRawParts(b), 0, -1}
 }
 
@@ -17,20 +17,27 @@ type iter struct {
 }
 
 func (b *iter) MoveNext() bool {
-	if b.current == 0 {
+	if b.partIdx >= len(b.parts) {
+		return false
+	}
+
+	for b.current == 0 {
 		b.partIdx++
 		if b.partIdx >= len(b.parts) {
 			return false
 		}
 
-		b.current = b.parts[b.partIdx]
-		return true
+		candidate := b.parts[b.partIdx]
+		if candidate != 0 {
+			b.current = candidate
+			break
+		}
 	}
 
 	b.current ^= (1 << bits.TrailingZeros64(b.current))
-	return true
+	return b.current != 0
 }
 
-func (b *iter) Current() int {
-	return b.partIdx*64 + bits.TrailingZeros64(b.current)
+func (b *iter) Current() uint64 {
+	return uint64(b.partIdx)*64 + uint64(bits.TrailingZeros64(b.current))
 }
