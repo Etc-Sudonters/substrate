@@ -48,9 +48,9 @@ func (b *Builder) AddEdge(o Origination, d Destination) error {
 
 func (b *Builder) AddEdges(e OriginationMap) error {
 	for o, neighbors := range e {
-		biter := bitset.Iter(neighbors)
-		for biter.MoveNext() {
-			if err := b.AddEdge(o, Destination(biter.Current())); err != nil {
+		biter := bitset.Iter64T[Destination](neighbors)
+        for dest := range biter.All {
+			if err := b.AddEdge(o, dest); err != nil {
 				return err
 			}
 		}

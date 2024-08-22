@@ -34,3 +34,11 @@ func (q *Q[T]) Pop() (T, error) {
 func (q *Q[T]) Len() int {
 	return len(*q)
 }
+
+func(q *Q[T]) Iter(yield func(T) bool) {
+    for _, t := range *q {
+        if !yield(t) {
+            break
+        }
+    }
+}

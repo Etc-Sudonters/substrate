@@ -1,9 +1,11 @@
 package bitset
 
 import (
+	"math"
+	"math/rand/v2"
 	"testing"
 
-	"github.com/etc-sudonters/substrate/reiterate"
+	"github.com/etc-sudonters/substrate/rng"
 )
 
 const (
@@ -146,21 +148,11 @@ func TestDifference(t *testing.T) {
 }
 
 func TestLength(t *testing.T) {
-	b := Bitset64{}
-	b.Set(1)
-	b.Set(65)
-	b.Set(129)
-
-	if l := b.Len(); l != 3 {
-		t.Fatalf("expected length of 3 but got %d", l)
+    b := Bitset64{}
+    r := rand.New(rng.NewXoshiro256PPFromU64(0xbf58476d1ce4e5b9))
+	for range 5000 {
+        for !b.Set(r.Uint64N(math.MaxUint16)) {}
 	}
-
-	b = WithBucketsFor(10000)
-
-	for i := 0; i < 10000; i += 2 {
-		b.Set(uint64(i))
-	}
-
 	if l := b.Len(); l != 5000 {
 		t.Fatalf("expected length of 5000 but got %d", l)
 	}
@@ -179,15 +171,13 @@ func TestElems(t *testing.T) {
 		t.Fatalf("mismatched elems\nexpected:\t%+v\nactual:\t%+v", expected, elems)
 	}
 
-	pairs := reiterate.ZipTwo(expected, elems)
-
-	for i := 0; pairs.Next(); i++ {
-		p := pairs.Current()
-		if p.A != p.B {
-			t.Logf("expected to find %d at index %d but found %d", p.A, i, p.B)
+    for idx := range elems {
+        a, b := expected[idx], elems[idx]
+        if a != b {
+			t.Logf("expected to find %d at index %d but found %d", a, idx, b)
 			t.Fail()
-		}
-	}
+        }
+    }
 
 	b = WithBucketsFor(10000)
 	expected = make([]uint64, 0, 5000)
@@ -208,15 +198,13 @@ func TestElems(t *testing.T) {
 		t.Fatalf("expected length of %d but got %d", len(expected), l)
 	}
 
-	pairs = reiterate.ZipTwo(expected, elems)
-
-	for i := 0; pairs.Next(); i++ {
-		p := pairs.Current()
-		if p.A != p.B {
-			t.Logf("expected to find %d at index %d but found %d", p.A, i, p.B)
+    for idx := range elems {
+        a, b := expected[idx], elems[idx]
+        if a != b {
+			t.Logf("expected to find %d at index %d but found %d", a, idx, b)
 			t.Fail()
-		}
-	}
+        }
+    }
 }
 
 func TestEq(t *testing.T) {
