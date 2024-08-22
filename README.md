@@ -6,8 +6,10 @@
 A collection of odds and ends, sometimes with a cutesy name.
 
 * bag: a real mixed bag
-* circumstances: context related things
+* ~circumstances: context related things~
 * dontio: io stuff, but ioutils is a bad name
-* reiterate: tools for iteration
+* ~reiterate: tools for iteration~ range over func replaces this
+* rng: rng related things
 * skelly: data structures of various quality
-* stageleft: errs, panics, exit codes
+* slipup: errs
+* stageleft: ~errs,~ panics, exit codes

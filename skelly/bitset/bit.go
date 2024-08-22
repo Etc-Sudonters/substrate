@@ -72,11 +72,13 @@ func (b *Bitset64) resize(bucket int) {
 	b.buckets = buckets
 }
 
-func (b *Bitset64) Set(i uint64) {
-	bucket := Buckets(i)
+func (b *Bitset64) Set(i uint64) bool {
+	idx := Buckets(i)
 	bit := BitIndex(i)
-	b.resize(bucket)
-	b.buckets[bucket] |= bit
+	b.resize(idx)
+    bucket := b.buckets[idx]
+	b.buckets[idx] = bucket|bit
+    return bucket&bit == 0
 }
 
 func (b Bitset64) Unset(i uint64) {

@@ -38,3 +38,14 @@ func (s *S[T]) Pop() (T, error) {
 func (s *S[T]) Len() int {
 	return len(*s)
 }
+
+func (s *S[T]) Iter(yield func(T) bool) {
+	arr := *s
+	length := len(arr) - 1
+	for idx := range arr {
+		v := arr[length-idx]
+		if !yield(v) {
+			break
+		}
+	}
+}

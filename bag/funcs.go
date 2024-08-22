@@ -2,7 +2,7 @@ package bag
 
 import (
 	"golang.org/x/exp/constraints"
-	"math/rand"
+	"math/rand/v2"
 )
 
 func Max[A constraints.Ordered](a, b A) A {

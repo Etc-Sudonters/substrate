@@ -12,8 +12,8 @@ func CreateT[T newtype](members ...T) Bitset64 {
 	return b
 }
 
-func Set[T newtype](b *Bitset64, t T) {
-	b.Set(uint64(t))
+func Set[T newtype](b *Bitset64, t T) bool {
+	return b.Set(uint64(t))
 }
 
 func Unset[T newtype](b *Bitset64, t T) {
