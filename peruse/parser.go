@@ -63,10 +63,10 @@ func (g Grammar[T]) Precedence(t TokenType) Precedence {
 	return g.precedence[t]
 }
 
-func NewParser[T any](g Grammar[T], l *StringLexer) *Parser[T] {
+func NewParser[T any](g Grammar[T], l TokenStream) *Parser[T] {
 	p := new(Parser[T])
-	p.g = g
-	p.l = l
+	p.gram = g
+	p.lex = l
 	// cycle first two tokens into place
 	p.Consume()
 	p.Consume()
@@ -74,8 +74,8 @@ func NewParser[T any](g Grammar[T], l *StringLexer) *Parser[T] {
 }
 
 type Parser[T any] struct {
-	g         Grammar[T]
-	l         *StringLexer
+	gram      Grammar[T]
+	lex       TokenStream
 	Cur, Next Token
 	empty     T
 }
@@ -90,7 +90,7 @@ func (p *Parser[T]) Parse() (T, error) {
 
 func (p *Parser[T]) ParseAt(prd Precedence) (T, error) {
 	var t T
-	parser, ok := p.g.parselets[p.Cur.Type]
+	parser, ok := p.gram.parselets[p.Cur.Type]
 
 	if !ok {
 		return t, UnexpectedToken{p.Cur}
@@ -105,7 +105,7 @@ func (p *Parser[T]) ParseAt(prd Precedence) (T, error) {
 	for thisPrd := p.NextPrecedence(); prd < thisPrd; thisPrd = p.NextPrecedence() {
 		p.Consume()
 
-		parselet, exists := p.g.infixes[p.Cur.Type]
+		parselet, exists := p.gram.infixes[p.Cur.Type]
 		if !exists {
 			break
 		}
@@ -120,12 +120,12 @@ func (p *Parser[T]) ParseAt(prd Precedence) (T, error) {
 }
 
 func (p *Parser[T]) NextPrecedence() Precedence {
-	return p.g.precedence[p.Next.Type]
+	return p.gram.precedence[p.Next.Type]
 }
 
 func (p *Parser[T]) Consume() {
 	p.Cur = p.Next
-	p.Next = p.l.NextToken()
+	p.Next = p.lex.NextToken()
 }
 
 func (p *Parser[T]) Expect(n TokenType) bool {

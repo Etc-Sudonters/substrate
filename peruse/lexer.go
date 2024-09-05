@@ -6,6 +6,10 @@ import (
 	"unicode/utf8"
 )
 
+type TokenStream interface {
+	NextToken() Token
+}
+
 type LexFn func(*StringLexer, any) LexFn
 
 type TokenType int64
