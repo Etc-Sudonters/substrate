@@ -1,7 +1,7 @@
 package peruse
 
-type Parselet[T any] func(Parser[T]) (T, error)
-type InflixParselet[T any] func(Parser[T], T, Precedence) (T, error)
+type Parselet[T any] func(*Parser[T]) (T, error)
+type InflixParselet[T any] func(*Parser[T], T, Precedence) (T, error)
 type Precedence uint
 
 type Grammar[T any] struct {
