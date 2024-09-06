@@ -24,7 +24,7 @@ func AllTokens(ts TokenStream) iter.Seq[Token] {
 	}
 }
 
-type LexFn func(*StringLexer) LexFn
+type LexFn func(*StringLexer, any) LexFn
 
 type TokenType int64
 
@@ -50,7 +50,7 @@ func (t Token) Is(o TokenType) bool {
 
 func NewLexer(input string, initial LexFn, state any) *StringLexer {
 	s := new(StringLexer)
-	s.Init(input, initial)
+	s.Init(input, initial, state)
 	return s
 }
 
@@ -61,22 +61,24 @@ type StringLexer struct {
 	atEOF bool
 	token Token
 	fn    LexFn
+	state any
 }
 
-func (l *StringLexer) Init(input string, initial LexFn) {
+func (l *StringLexer) Init(input string, initial LexFn, state any) {
 	l.input = input
 	l.pos = Pos(0)
 	l.start = Pos(0)
 	l.atEOF = false
 	l.token = Token{}
 	l.fn = initial
+	l.state = state
 }
 
 func (l *StringLexer) NextToken() Token {
 	l.token = Token{Type: EOF, Pos: l.pos}
 	fn := l.fn
 	for {
-		fn = fn(l)
+		fn = fn(l, l.state)
 		if fn == nil {
 			return l.token
 		}
