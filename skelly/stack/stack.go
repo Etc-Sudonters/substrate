@@ -2,6 +2,8 @@ package stack
 
 import "errors"
 
+var ErrEmptyStack = errors.New("empty stack")
+
 type S[T any] []T
 
 func From[E any, T ~[]E](src T) *S[E] {
@@ -26,7 +28,7 @@ func (s *S[T]) Push(t T) {
 func (s *S[T]) Pop() (T, error) {
 	var t T
 	if len(*s) == 0 {
-		return t, errors.New("empty stack")
+		return t, ErrEmptyStack
 	}
 
 	items := *s
@@ -41,11 +43,17 @@ func (s *S[T]) Len() int {
 
 func (s *S[T]) Iter(yield func(T) bool) {
 	arr := *s
-	length := len(arr) - 1
-	for idx := range arr {
-		v := arr[length-idx]
-		if !yield(v) {
+	for _, t := range arr {
+		if !yield(t) {
 			break
 		}
 	}
+}
+
+func (s *S[T]) Top() (*T, error) {
+	if len(*s) == 0 {
+		return nil, ErrEmptyStack
+	}
+
+	return &(*s)[0], nil
 }

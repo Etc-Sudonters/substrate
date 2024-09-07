@@ -2,9 +2,27 @@ package peruse
 
 import (
 	"fmt"
+	"iter"
 	"strings"
 	"unicode/utf8"
 )
+
+type TokenStream interface {
+	NextToken() Token
+}
+
+func AllTokens(ts TokenStream) iter.Seq[Token] {
+	return func(yield func(Token) bool) {
+		var t Token
+		for {
+			t = ts.NextToken()
+			// yield EOF _once_ to signify we're at the end
+			if !yield(t) || t.Type == EOF {
+				break
+			}
+		}
+	}
+}
 
 type LexFn func(*StringLexer, any) LexFn
 
@@ -42,8 +60,8 @@ type StringLexer struct {
 	start Pos
 	atEOF bool
 	token Token
-	state any
 	fn    LexFn
+	state any
 }
 
 func (l *StringLexer) Init(input string, initial LexFn, state any) {
@@ -52,8 +70,8 @@ func (l *StringLexer) Init(input string, initial LexFn, state any) {
 	l.start = Pos(0)
 	l.atEOF = false
 	l.token = Token{}
-	l.state = state
 	l.fn = initial
+	l.state = state
 }
 
 func (l *StringLexer) NextToken() Token {
@@ -142,4 +160,25 @@ func (l *StringLexer) AcceptWhile(a func(rune) bool) {
 			break
 		}
 	}
+}
+
+func UnexpectedAt(where string, unexpected error) error {
+	return fmt.Errorf("parsing %s: %w", where, unexpected)
+}
+
+type UnexpectedToken struct {
+	Have Token
+}
+
+func (u UnexpectedToken) Error() string {
+	return fmt.Sprintf("unexpected token %q", u.Have)
+}
+
+type InvalidToken struct {
+	Have   Token
+	Wanted TokenType
+}
+
+func (e InvalidToken) Error() string {
+	return fmt.Sprintf("expected %q but found %q", e.Wanted, e.Have)
 }
