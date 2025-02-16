@@ -1,28 +1,24 @@
-package bitset
+package bitset32
 
 import (
-	"math"
-	"math/rand/v2"
 	"testing"
-
-	"github.com/etc-sudonters/substrate/rng"
 )
 
 const (
-	minU uint64 = 0
+	minU uint32 = 0
 	maxU        = ^minU
 )
 
 func TestSetsBits(t *testing.T) {
-	expected := []uint64{2, 2, 2}
+	expected := []uint32{2, 2, 2}
 
-	numbers := []uint64{
+	numbers := []uint32{
 		1,
 		65,
 		129,
 	}
 
-	b := Bitset64{}
+	b := Bitset{}
 	for i := range numbers {
 		b.Set(numbers[i])
 	}
@@ -35,10 +31,10 @@ func TestSetsBits(t *testing.T) {
 }
 
 func TestClearsBits(t *testing.T) {
-	expected := []uint64{2, 0, 2}
+	expected := []uint32{2, 0, 2}
 
-	b := Bitset64{}
-	numbers := []uint64{1, 65, 129}
+	b := Bitset{}
+	numbers := []uint32{1, 65, 129}
 	for i := range numbers {
 		b.Set(numbers[i])
 	}
@@ -52,8 +48,8 @@ func TestClearsBits(t *testing.T) {
 }
 
 func TestTestBits(t *testing.T) {
-	var b Bitset64
-	b.buckets = []uint64{2, 2, 2}
+	var b Bitset
+	b.buckets = []uint32{2, 2, 2}
 
 	if !b.IsSet(1) {
 		t.Log("expected 1 to be set")
@@ -72,7 +68,7 @@ func TestTestBits(t *testing.T) {
 }
 
 func TestComplement(t *testing.T) {
-	b := Bitset64{}
+	b := Bitset{}
 	b.Set(1)
 	b.Set(65)
 	b.Set(129)
@@ -86,10 +82,10 @@ func TestComplement(t *testing.T) {
 }
 
 func TestIntersect(t *testing.T) {
-	b1 := Bitset64{}
-	b2 := Bitset64{}
+	b1 := Bitset{}
+	b2 := Bitset{}
 
-	shared := []uint64{1, 65, 129}
+	shared := []uint32{1, 65, 129}
 	b1.Set(144)
 	b2.Set(13)
 
@@ -106,9 +102,9 @@ func TestIntersect(t *testing.T) {
 }
 
 func TestUnion(t *testing.T) {
-	b1 := Bitset64{}
-	b2 := Bitset64{}
-	b3 := Bitset64{}
+	b1 := Bitset{}
+	b2 := Bitset{}
+	b3 := Bitset{}
 
 	b1.Set(1)
 	b2.Set(65)
@@ -116,14 +112,14 @@ func TestUnion(t *testing.T) {
 
 	b := b1.Union(b2).Union(b3)
 
-	if !b.Eq(FromRaw(2, 2, 2)) {
+	if !b.Eq(FromRaw([]uint32{2, 2, 2})) {
 		t.Fail()
 	}
 }
 
 func TestDifference(t *testing.T) {
-	b1 := Bitset64{}
-	b2 := Bitset64{}
+	b1 := Bitset{}
+	b2 := Bitset{}
 
 	b1.Set(1)
 	b1.Set(65)
@@ -131,7 +127,7 @@ func TestDifference(t *testing.T) {
 	b2.Set(129)
 
 	b1DiffB2 := b1.Difference(b2)
-	expected := FromRaw(2, 0, 0)
+	expected := FromRaw([]uint32{2, 0, 0})
 
 	if !b1DiffB2.Eq(expected) {
 		t.Log("expected only 1 to be set")
@@ -139,7 +135,7 @@ func TestDifference(t *testing.T) {
 	}
 
 	b2DiffB1 := b2.Difference(b1)
-	expected = FromRaw(0, 0, 2)
+	expected = FromRaw([]uint32{0, 0, 2})
 
 	if !b2DiffB1.Eq(expected) {
 		t.Log("expected only 129 to be set")
@@ -147,44 +143,33 @@ func TestDifference(t *testing.T) {
 	}
 }
 
-func TestLength(t *testing.T) {
-    b := Bitset64{}
-    r := rand.New(rng.NewXoshiro256PPFromU64(0xbf58476d1ce4e5b9))
-	for range 5000 {
-        for !b.Set(r.Uint64N(math.MaxUint16)) {}
-	}
-	if l := b.Len(); l != 5000 {
-		t.Fatalf("expected length of 5000 but got %d", l)
-	}
-}
-
 func TestElems(t *testing.T) {
-	b := Bitset64{}
+	b := Bitset{}
 	b.Set(1)
 	b.Set(65)
 	b.Set(129)
 
-	expected := []uint64{1, 65, 129}
+	expected := []uint32{1, 65, 129}
 	elems := b.Elems()
 
 	if len(expected) != len(elems) {
 		t.Fatalf("mismatched elems\nexpected:\t%+v\nactual:\t%+v", expected, elems)
 	}
 
-    for idx := range elems {
-        a, b := expected[idx], elems[idx]
-        if a != b {
+	for idx := range elems {
+		a, b := expected[idx], elems[idx]
+		if a != b {
 			t.Logf("expected to find %d at index %d but found %d", a, idx, b)
 			t.Fail()
-        }
-    }
+		}
+	}
 
 	b = WithBucketsFor(10000)
-	expected = make([]uint64, 0, 5000)
+	expected = make([]uint32, 0, 5000)
 
 	for i := 0; i < 10000; i += 2 {
-		b.Set(uint64(i))
-		expected = append(expected, uint64(i))
+		b.Set(uint32(i))
+		expected = append(expected, uint32(i))
 	}
 
 	elems = b.Elems()
@@ -198,17 +183,17 @@ func TestElems(t *testing.T) {
 		t.Fatalf("expected length of %d but got %d", len(expected), l)
 	}
 
-    for idx := range elems {
-        a, b := expected[idx], elems[idx]
-        if a != b {
+	for idx := range elems {
+		a, b := expected[idx], elems[idx]
+		if a != b {
 			t.Logf("expected to find %d at index %d but found %d", a, idx, b)
 			t.Fail()
-        }
-    }
+		}
+	}
 }
 
 func TestEq(t *testing.T) {
-	b1 := Bitset64{}
+	b1 := Bitset{}
 	b1.Set(32)
 	b2 := Copy(b1)
 	b2.resize(3)
