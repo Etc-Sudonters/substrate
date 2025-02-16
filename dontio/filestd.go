@@ -8,14 +8,9 @@ import (
 
 type FileStdFlags uint64
 
-const (
-	FILESTD_OPEN_STDIN FileStdFlags = 1 << iota
-)
-
-// populates the passed *Std with files for out, err and optionally in
-// the returned cleanup function will never be nil and must always be
-// called
-func FileStd(std *Std, dir string, opts FileStdFlags) (func(), error) {
+// populates the passed *Std with files for out, err the returned cleanup
+// function will never be nil and must always be called
+func FileStd(std *Std, dir string) (func(), error) {
 	var opened []*os.File
 	cleanup := func() {
 		for _, f := range opened {
@@ -29,9 +24,6 @@ func FileStd(std *Std, dir string, opts FileStdFlags) (func(), error) {
 	}
 
 	opening := []string{"out", "err"}
-	if opts&FILESTD_OPEN_STDIN == FILESTD_OPEN_STDIN {
-		opening = append(opening, "in")
-	}
 
 	for _, name := range opening {
 		file, fileErr := os.Create(filepath.Join(dir, name))
@@ -43,9 +35,6 @@ func FileStd(std *Std, dir string, opts FileStdFlags) (func(), error) {
 
 	std.Out = opened[0]
 	std.Err = opened[1]
-	if len(opening) == 3 {
-		std.In = opened[2]
-	}
 	return cleanup, nil
 
 }
