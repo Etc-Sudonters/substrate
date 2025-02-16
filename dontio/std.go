@@ -36,7 +36,7 @@ func StdFromContext(ctx context.Context) (*Std, error) {
 }
 
 func NamedStdFromContext(ctx context.Context, name string) (*Std, error) {
-	v := ctx.Value(stdkey)
+	v := ctx.Value(ctxkey(stdkey))
 	if v == nil {
 		return nil, notInCtx("stdio")
 	}
