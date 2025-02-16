@@ -9,7 +9,7 @@ import (
 
 type ctxkey string
 
-var stdkey ctxkey = "std"
+var stdkey = "std"
 
 type notInCtx string // what wasn't present
 
@@ -24,10 +24,18 @@ type Std struct {
 }
 
 func AddStdToContext(ctx context.Context, s *Std) context.Context {
-	return context.WithValue(ctx, stdkey, s)
+	return AddNamedStdToContext(ctx, stdkey, s)
+}
+
+func AddNamedStdToContext(ctx context.Context, name string, s *Std) context.Context {
+	return context.WithValue(ctx, ctxkey(name), s)
 }
 
 func StdFromContext(ctx context.Context) (*Std, error) {
+	return NamedStdFromContext(ctx, stdkey)
+}
+
+func NamedStdFromContext(ctx context.Context, name string) (*Std, error) {
 	v := ctx.Value(stdkey)
 	if v == nil {
 		return nil, notInCtx("stdio")
@@ -40,6 +48,16 @@ func StdIo() Std {
 		Out: os.Stdout,
 		Err: os.Stderr,
 		In:  os.Stdin,
+	}
+}
+
+func Closed() Std {
+	r := AlwaysErrReader{io.ErrClosedPipe}
+	w := AlwaysErrWriter{io.ErrClosedPipe}
+	return Std{
+		Out: w,
+		Err: w,
+		In:  r,
 	}
 }
 
@@ -67,4 +85,20 @@ func WriteLineErr(ctx context.Context, tpl string, v ...any) error {
 	}
 	stdio.WriteLineErr(tpl, v...)
 	return nil
+}
+
+type AlwaysErrReader struct {
+	Err error
+}
+
+func (this AlwaysErrReader) Read([]byte) (int, error) {
+	return 0, this.Err
+}
+
+type AlwaysErrWriter struct {
+	Err error
+}
+
+func (this AlwaysErrWriter) Write([]byte) (int, error) {
+	return 0, this.Err
 }
