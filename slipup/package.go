@@ -26,3 +26,7 @@ func NotImplemented(name string) error {
 func NotImplementedf(tpl string, v ...any) error {
 	return Describef(ErrNotImplemented, tpl, v...)
 }
+
+func NeedsErrorHandling(e error) {
+	panic(Describe(e, "needs error handling"))
+}
